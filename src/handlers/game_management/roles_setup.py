@@ -4,7 +4,13 @@ import logging
 from src.db import conn, cursor
 from src.roles import available_roles, role_descriptions
 from src.config import RANDOM_ORG_API_KEY
-from .base import role_counts_lock, ROLES_PER_PAGE, get_random_shuffle
+from .base import (
+    role_counts_lock,
+    ROLES_PER_PAGE,
+    get_random_shuffle,
+    get_player_count,
+    get_templates_for_player_count
+)
 from telegram.helpers import escape_markdown  # Newly added import
 import random
 
