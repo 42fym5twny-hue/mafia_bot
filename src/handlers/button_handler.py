@@ -115,7 +115,7 @@ async def handle_button(update: ContextTypes.DEFAULT_TYPE, context: ContextTypes
             return
         context.user_data["action"] = "set_roles"
         context.user_data['current_page'] = 0
-        await show_role_buttons(update, context)
+        await set_roles(update, context)
 
     elif data == "manage_games":
         logger.debug("manage_games button pressed.")
