@@ -97,7 +97,7 @@ async def set_roles(
                  "Нажми «Confirm Roles», чтобы случайно раздать роли игрокам."
         )
 
-    await set_roles(update, context)
+    await show_role_buttons(update, context)
 
 async def show_role_buttons(update: ContextTypes.DEFAULT_TYPE, context: ContextTypes.DEFAULT_TYPE, message_id=None) -> int:
     logger.debug("Displaying role buttons.")
