@@ -17,9 +17,86 @@ import random
 logger = logging.getLogger("Mafia Bot GameManagement.RolesSetup")
 
 
-async def set_roles(update: ContextTypes.DEFAULT_TYPE, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def set_roles(
+    update: ContextTypes.DEFAULT_TYPE,
+    context: ContextTypes.DEFAULT_TYPE
+) -> None:
     logger.debug("Setting roles.")
-    # This function can be expanded if additional functionality is needed
+
+    game_id = context.user_data.get("game_id")
+
+    if not game_id:
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text="No game selected."
+        )
+        return
+
+    player_count = get_player_count(game_id)
+
+    if player_count == 8:
+        templates = get_templates_for_player_count(player_count)
+        template = next(
+            (t for t in templates if t.get("name") == "MediaMafia - 8"),
+            None
+        )
+
+        if template is None:
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id,
+                text="Шаблон MediaMafia - 8 не найден."
+            )
+            return
+
+        roles = template.get("roles", {})
+
+        if set(roles.keys()) != set(available_roles):
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id,
+                text="Ошибка: названия ролей в шаблоне не совпадают с roles.json."
+            )
+            return
+
+        if sum(roles.values()) != player_count:
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id,
+                text="Ошибка: количество ролей в шаблоне не равно числу игроков."
+            )
+            return
+
+        async with role_counts_lock:
+            cursor.execute(
+                "SELECT moderator_id FROM Games WHERE game_id = ?",
+                (game_id,)
+            )
+            result = cursor.fetchone()
+
+            if not result or result[0] != update.effective_user.id:
+                await context.bot.send_message(
+                    chat_id=update.effective_chat.id,
+                    text="You are not authorized to set roles."
+                )
+                return
+
+            cursor.execute(
+                "DELETE FROM GameRoles WHERE game_id = ?",
+                (game_id,)
+            )
+
+            for role in available_roles:
+                cursor.execute(
+                    "INSERT INTO GameRoles (game_id, role, count) VALUES (?, ?, ?)",
+                    (game_id, role, roles[role])
+                )
+
+            conn.commit()
+
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text="Шаблон MediaMafia - 8 применён автоматически. "
+                 "Нажми «Confirm Roles», чтобы случайно раздать роли игрокам."
+        )
+
     await show_role_buttons(update, context)
 
 async def show_role_buttons(update: ContextTypes.DEFAULT_TYPE, context: ContextTypes.DEFAULT_TYPE, message_id=None) -> int:
